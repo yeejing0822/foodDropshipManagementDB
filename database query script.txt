@@ -1,0 +1,103 @@
+set linesize 150;
+
+COLUMN staff_name HEADING 'STAFF NAME'
+COLUMN LPAD(sd.invoice_num,7) HEADING 'INVOICE|NUMBER' 
+COLUMN LPAD('RM'||TO_CHAR(SUM(sales_price*quantity_sold),'9999.99'),11) HEADING 'TOTAL SALES|PRICE' 
+COLUMN LPAD('RM'||TO_CHAR(SUM(quantity_sold*commission_rate*sales_price),'9999.99'),11) HEADING 'DISCOUNTED|PRICE'
+COLUMN SALES_GAIN HEADING 'TOTAL SALES|GAIN'
+SELECT staff_name , LPAD(sd.invoice_num,7), LPAD('RM'||TO_CHAR(SUM(sales_price*quantity_sold),'9999.99'),11), 
+LPAD('RM'||TO_CHAR(SUM(quantity_sold*commission_rate*sales_price),'9999.99'),11), 
+LPAD('RM'||TO_CHAR(SUM(sales_price*quantity_sold-quantity_sold*commission_rate*sales_price),'9999.99'),11) AS SALES_GAIN
+FROM SALES S, SALES_DETAIL SD, MARKETING_STAFF MS
+WHERE  ms.staff_id = s.staff_id 
+AND s.invoice_num = sd.invoice_num
+GROUP BY sd.invoice_num, staff_name
+ORDER BY staff_name; 
+
+COLUMN TO_CHAR(buy_date,'MM-YYYY') HEADING 'BUY STOCK DATE|(MONTH)' FORMAT A15
+COLUMN LPAD('RM'||TO_CHAR(SUM(intake_price*quantity_bought),'9990.99'),10) HEADING 'TOTAL COST|(MONTH)'
+SELECT TO_CHAR(buy_date,'MM-YYYY'), LPAD('RM'||TO_CHAR(SUM(intake_price*quantity_bought),'9990.99'),10)
+FROM INTAKE_DETAIL ID,STOCK_INTAKE SI
+WHERE id.purchase_order_id = si.purchase_order_id
+GROUP BY TO_CHAR(buy_date,'MM-YYYY')
+ORDER BY TO_CHAR(buy_date,'MM-YYYY');
+
+COLUMN cus_name HEADING 'CUSTOMER NAME'
+COLUMN TO_CHAR(sales_date,'MM-YYYY') HEADING 'SALES DATE|PER MONTH' FORMAT A10
+COLUMN LPAD('RM'||TO_CHAR(SUM(sales_price*quantity_sold),'99990.99'),15) HEADING 'TOTAL PURCHASE|PER MONTH' 
+SELECT cus_name, TO_CHAR(sales_date,'MM-YYYY'),LPAD('RM'||TO_CHAR(SUM(sales_price*quantity_sold),'99990.99'),15)
+FROM CUSTOMER C,REGISTERED_CUSTOMER RC, PHONE_NUMBER PN,SALES S, SALES_DETAIL SD
+WHERE c.cus_id = rc.cus_id
+AND c.cus_id = pn.cus_id 
+AND s.phone_id = pn.phone_id
+AND s.invoice_num = sd.invoice_num
+AND rc_type = 'A'
+GROUP BY cus_name, TO_CHAR(sales_date,'MM-YYYY')
+ORDER BY cus_name;
+
+COLUMN PRODUCT_NAME HEADING 'PRODUCT NAME'
+COLUMN (Q.QUANTITY-A.TOTAL) HEADING 'CURRENT STOCK|QUANTITY'
+COLUMN TOTAL HEADING 'TOTAL QUANTITY|SOLD'
+COLUMN QUANTITY HEADING 'TOTAL QUANTITY|BOUGHT'
+SELECT A.PRODUCT_NAME, (Q.QUANTITY-A.TOTAL), A.TOTAL, Q.QUANTITY FROM
+(
+	SELECT PRODUCT_NAME, SUM(sumcol) as Total
+	FROM	
+	(
+		SELECT PRODUCT_NAME, SUM(QUANTITY_SOLD) as sumcol
+		FROM NORMAL_PRODUCT, SALES_DETAIL
+ 		WHERE PRODUCT_ID = ITEM_ID
+		GROUP BY PRODUCT_NAME
+ 		union
+ 		SELECT product_name, sum(product_quantity*quantity_sold) as sumcol
+ 		from (pack_detail inner join normal_product on pack_detail.product_id = normal_product.product_id) inner join 
+		(sales_detail inner join promo_package on promo_package.pack_id = item_id) on pack_detail.pack_id = promo_package.pack_id
+		GROUP BY PRODUCT_NAME
+	)
+	GROUP BY PRODUCT_NAME
+) A,
+(
+	SELECT PRODUCT_NAME, SUM(QUANTITY_BOUGHT) AS QUANTITY
+	FROM INTAKE_DETAIL, NORMAL_PRODUCT
+	WHERE NORMAL_PRODUCT.PRODUCT_ID = INTAKE_DETAIL.PRODUCT_ID
+	GROUP BY PRODUCT_NAME	
+) Q
+WHERE A.PRODUCT_NAME = Q.PRODUCT_NAME;
+
+COLUMN LPAD(a.SALES_DATE,10) HEADING 'SALES DATE|IN MONTH'
+COLUMN LPAD(a.TOTAL_SALES_MADE,11) HEADING 'TOTAL SALES|MADE'
+COLUMN LPAD(NVL(a.NUM_SALES,0),11) HEADING 'PERFORMANCE|GROWTH|(SALES)'
+COLUMN LPAD('RM'||b.TOTAL_SALES_GAIN,11) HEADING 'TOTAL SALES|GAIN'
+COLUMN LPAD(TO_CHAR(NVL(b.PERFORMANCE,0)*100,'90.99'),12) HEADING 'PREFORMANCE|GROWTH|(%)'
+SELECT LPAD(a.SALES_DATE,10),LPAD(a.TOTAL_SALES_MADE,11), LPAD(NVL(a.NUM_SALES,0),11), LPAD('RM'||b.TOTAL_SALES_GAIN,11), LPAD(TO_CHAR(NVL(b.PERFORMANCE,0)*100,'90.99'),12)
+FROM ( 
+		SELECT TO_CHAR(sales_date,'MM-YYYY') AS SALES_DATE, COUNT(TO_CHAR(sales_date,'MM-YYYY')) AS TOTAL_SALES_MADE, 
+		COUNT(TO_CHAR(sales_date,'MM-YYYY'))-LAG(COUNT(TO_CHAR(sales_date,'MM-YYYY'))) 
+		OVER (ORDER BY TO_CHAR(sales_date,'MM-YYYY')) AS NUM_SALES
+		FROM SALES S 
+		GROUP BY TO_CHAR(sales_date,'MM-YYYY')
+		) a,
+	(
+		SELECT TO_CHAR(sales_date,'MM-YYYY') AS SALES_DATE, SUM(TO_CHAR(sales_price*quantity_sold-quantity_sold*commission_rate*sales_price, '9999.99')) AS TOTAL_SALES_GAIN,
+		(SUM(TO_CHAR(sales_price*quantity_sold-quantity_sold*commission_rate*sales_price, '9999.99'))-
+		LAG(SUM(TO_CHAR(sales_price*quantity_sold-quantity_sold*commission_rate*sales_price, '9999.99'))) OVER (ORDER BY TO_CHAR(sales_date,'MM-YYYY')))
+		/LAG(SUM(TO_CHAR(sales_price*quantity_sold-quantity_sold*commission_rate*sales_price, '9999.99'))) OVER (ORDER BY TO_CHAR(sales_date,'MM-YYYY')) AS PERFORMANCE
+		FROM SALES S, SALES_DETAIL SD
+		WHERE s.invoice_num = sd.invoice_num
+		GROUP BY TO_CHAR(sales_date,'MM-YYYY')
+		) b
+WHERE a.SALES_DATE = b.SALES_DATE
+ORDER BY a.SALES_DATE;
+
+COLUMN NUM HEADING 'INVOICE NUMBER'
+COLUMN A HEADING 'STARTED ON'
+COLUMN B HEADING 'ARRIVED ON'
+COLUMN DATEDIFF HEADING 'TIME TAKEN|(DAY)'
+COLUMN R HEADING 'REGION'
+SELECT 
+	RPAD(SALES.INVOICE_NUM,15) AS NUM, RPAD(REGION_NAME, 15) AS R,
+	RPAD(TO_CHAR(SHIP_START_DATE, 'DD-MON-YYYY'),15) AS A, RPAD(NVL(TO_CHAR(SHIP_END_DATE, 'DD-MON-YYYY'), 'NOT ARRIVED YET'),18) AS B,
+	RPAD(NVL(TO_CHAR(SHIP_END_DATE- SHIP_START_DATE), '-'),12) AS DATEDIFF, STAFF_NAME
+FROM SHIPMENT_DETAIL INNER JOIN POSTAGE ON SHIPMENT_ID = REGION_ID, MARKETING_STAFF INNER JOIN SALES ON MARKETING_STAFF.STAFF_ID = SALES.STAFF_ID
+WHERE SHIPMENT_DETAIL.INVOICE_NUM = SALES.INVOICE_NUM 
+ORDER BY SHIP_START_DATE;

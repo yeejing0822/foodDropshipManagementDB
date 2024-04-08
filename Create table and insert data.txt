@@ -1,0 +1,186 @@
+CREATE TABLE CUSTOMER
+(cus_id VARCHAR2 (5),
+cus_name VARCHAR2 (30) CONSTRAINT cus_name_nn NOT NULL,
+cus_email VARCHAR2 (30),
+cus_address VARCHAR2 (50),
+cus_acc_num NUMBER (20),
+CONSTRAINT customer_cus_id_pk PRIMARY KEY (cus_id));
+
+CREATE TABLE REGISTERED_CUSTOMER
+( cus_id VARCHAR2 (5),
+rc_fb_name VARCHAR2 (30),
+rc_ic VARCHAR2 (30) CONSTRAINT rc_ic_nn NOT NULL,
+rc_type CHAR (1) CONSTRAINT rc_type_nn NOT NULL,
+CONSTRAINT rc_cus_id_pk PRIMARY KEY (cus_id),
+CONSTRAINT rc_cus_id_fk FOREIGN KEY (cus_id) REFERENCES CUSTOMER(cus_id));
+
+CREATE TABLE PHONE_NUMBER
+(phone_id VARCHAR2 (5),
+cus_id VARCHAR2 (5),
+phone_type CHAR (1) CONSTRAINT phone_type_nn NOT NULL,
+phone_num VARCHAR2 (15) CONSTRAINT phone_num_nn NOT NULL,
+CONSTRAINT pn_phone_id_pk PRIMARY KEY (phone_id),
+CONSTRAINT pn_cus_id_fk FOREIGN KEY (cus_id) REFERENCES CUSTOMER(cus_id));
+
+CREATE TABLE MARKETING_STAFF
+(staff_id VARCHAR2 (5),
+staff_name VARCHAR2 (30),
+staff_ic VARCHAR2 (30)CONSTRAINT staff_ic_nn NOT NULL,
+staff_email VARCHAR2 (30),
+staff_phone_num VARCHAR2 (15) CONSTRAINT staff_phone_num_nn NOT NULL,
+staff_fb_name VARCHAR2 (30),
+CONSTRAINT ms_staff_id_pk PRIMARY KEY (staff_id));
+
+CREATE TABLE NORMAL_PRODUCT
+(product_id VARCHAR2 (5),
+weight NUMBER (5) CONSTRAINT np_weight_nn NOT NULL,
+product_price NUMBER (5,2) CONSTRAINT product_price_nn NOT NULL,
+product_name VARCHAR2 (30) CONSTRAINT product_name_nn NOT NULL,
+CONSTRAINT np_product_id_pk PRIMARY KEY (product_id));
+
+CREATE TABLE PROMO_PACKAGE
+(pack_id VARCHAR2 (5),
+pack_name VARCHAR2 (30) CONSTRAINT pack_name_nn NOT NULL,
+pack_price NUMBER (5,2) CONSTRAINT pack_price_nn NOT NULL,
+CONSTRAINT pp_id_pk PRIMARY KEY (pack_id));
+
+CREATE TABLE PACK_DETAIL
+(pack_id VARCHAR2 (5),
+product_id VARCHAR2 (5),
+product_quantity NUMBER (5) CONSTRAINT product_quantity_nn NOT NULL,
+CONSTRAINT pack_id_product_id_pk PRIMARY KEY (pack_id,product_id),
+CONSTRAINT pd_pack_id_fk FOREIGN KEY (pack_id) REFERENCES PROMO_PACKAGE(pack_id),
+CONSTRAINT pd_product_id_fk FOREIGN KEY (product_id) REFERENCES NORMAL_PRODUCT (product_id));
+
+CREATE TABLE STOCK_INTAKE
+(purchase_order_id VARCHAR2 (5),
+buy_date DATE CONSTRAINT buy_date_nn NOT NULL,
+CONSTRAINT si_purchase_order_id_pk PRIMARY KEY (purchase_order_id));
+
+CREATE TABLE INTAKE_DETAIL
+(purchase_order_id VARCHAR2 (5),
+product_id VARCHAR2(5),
+intake_price NUMBER (5,2)CONSTRAINT intake_price_nn NOT NULL,
+quantity_bought NUMBER (5)CONSTRAINT quantity_bought_nn NOT NULL,
+CONSTRAINT purchase_product_id_pk PRIMARY KEY (purchase_order_id, product_id),
+CONSTRAINT id_purchase_id_fk FOREIGN KEY (purchase_order_id) REFERENCES STOCK_INTAKE (purchase_order_id),
+CONSTRAINT id_product_id_fk FOREIGN KEY (product_id) REFERENCES NORMAL_PRODUCT (product_id));
+
+CREATE TABLE SALES 
+(invoice_num  VARCHAR2 (5),
+staff_id VARCHAR2 (5),
+phone_id VARCHAR2 (5),
+sales_date DATE CONSTRAINT sales_date_nn NOT NULL,
+payment_type VARCHAR2 (10)CONSTRAINT payment_type_nn NOT NULL,
+CONSTRAINT s_invoice_num_pk PRIMARY KEY (invoice_num),
+CONSTRAINT s_staff_id_fk FOREIGN KEY (staff_id) REFERENCES MARKETING_STAFF (staff_id),
+CONSTRAINT s_phone_id_fk FOREIGN KEY (phone_id) REFERENCES PHONE_NUMBER (phone_id));
+
+CREATE TABLE SALES_DETAIL
+(invoice_num VARCHAR2 (5),
+item_id VARCHAR2 (5),
+item_type VARCHAR2 (10) CONSTRAINT item_type_nn NOT NULL,
+sales_price NUMBER (5,2)CONSTRAINT sales_price_nn NOT NULL,
+quantity_sold NUMBER (5)CONSTRAINT quantity_sold_nn NOT NULL,
+commission_rate NUMBER (3,2),
+CONSTRAINT invoice_num_item_id_pk PRIMARY KEY (invoice_num,item_id),
+CONSTRAINT salesd_invoice_num_fk FOREIGN KEY (invoice_num) REFERENCES SALES (invoice_num));
+
+CREATE TABLE DELIVERY
+(loca_id VARCHAR2 (5),
+loca_name VARCHAR2(30) CONSTRAINT loca_name_nn NOT NULL,
+charge NUMBER (5,2) CONSTRAINT charge_nn NOT NULL,
+CONSTRAINT d_loca_id_pk PRIMARY KEY (loca_id));
+
+CREATE TABLE POSTAGE
+(region_id VARCHAR2(5),
+region_name VARCHAR2(30)CONSTRAINT region_name_nn NOT NULL,
+basic_fee NUMBER (5,2) CONSTRAINT basic_fee_nn NOT NULL,
+weight NUMBER (5,2) CONSTRAINT p_weight_nn NOT NULL,
+CONSTRAINT p_region_id_pk PRIMARY KEY (region_id));
+
+CREATE TABLE SHIPMENT_DETAIL 
+(invoice_num VARCHAR2 (5),
+shipment_id VARCHAR2 (5)CONSTRAINT shipment_id_nn NOT NULL,
+shipment_type VARCHAR2 (10)CONSTRAINT shipment_type_nn NOT NULL,
+shipment_price NUMBER (5,2)CONSTRAINT shipment_price_nn NOT NULL,
+ship_start_date DATE CONSTRAINT ship_start_date_nn NOT NULL,
+ship_end_date DATE,
+CONSTRAINT sd_invoice_num_pk PRIMARY KEY (invoice_num),
+CONSTRAINT shipmentd_invoice_num_fk FOREIGN KEY (invoice_num) REFERENCES SALES (invoice_num));
+
+INSERT INTO CUSTOMER (cus_id, cus_name, cus_email, cus_address, cus_acc_num) VALUES ('C0001', 'Ng Khee Long', 'kheelong@gmail.com', 'No 12, Jalan A, Taman Bahagia, 43500, Semenyih', 0123456789);
+INSERT INTO CUSTOMER (cus_id, cus_name, cus_email, cus_address, cus_acc_num) VALUES ('C0002', 'Tay Shi Swen', 'shiswen15@gmail.com', 'No 11, Jalan B, Taman Lily, 43000, Kajang', 1234567890);
+INSERT INTO CUSTOMER (cus_id, cus_name, cus_email, cus_address, cus_acc_num) VALUES ('C0003', 'Lily Chen Lee', 'archie@gmail.com', 'No 1, Jalan Bawang, Taman Northwood, 60000, KL', 2345678901);
+INSERT INTO CUSTOMER (cus_id, cus_name, cus_email, cus_address, cus_acc_num) VALUES ('C0004', 'Chuah Mooi Kim', 'cmk@gmail.com', null, 3456789012);
+INSERT INTO CUSTOMER (cus_id, cus_name, cus_email, cus_address, cus_acc_num) VALUES ('C0005', 'Koh Rong Soon', 'rongsoon2000@gmail.com', 'No 4, Jalan , Taman Bahagia, 43500, Semenyih', 4567890123);
+
+INSERT INTO PHONE_NUMBER (phone_id, cus_id, phone_type, phone_num) VALUES ('P0001', 'C0001', 'H', '0334567890');
+INSERT INTO PHONE_NUMBER (phone_id, cus_id, phone_type, phone_num) VALUES ('P0002', 'C0001', 'P', '0123456789');
+INSERT INTO PHONE_NUMBER (phone_id, cus_id, phone_type, phone_num) VALUES ('P0003', 'C0002', 'B', '0162899293');
+INSERT INTO PHONE_NUMBER (phone_id, cus_id, phone_type, phone_num) VALUES ('P0004', 'C0003', 'P', '01118633398');
+INSERT INTO PHONE_NUMBER (phone_id, cus_id, phone_type, phone_num) VALUES ('P0005', 'C0004', 'H', '0168989522');
+INSERT INTO PHONE_NUMBER (phone_id, cus_id, phone_type, phone_num) VALUES ('P0006', 'C0005', 'P', '0113878599');
+
+INSERT INTO REGISTERED_CUSTOMER (cus_id, rc_fb_name, rc_ic, rc_type) VALUES ('C0001', 'Adam Ng', '000522141021', 'A');
+INSERT INTO REGISTERED_CUSTOMER (cus_id, rc_fb_name, rc_ic, rc_type) VALUES ('C0002', 'Selena Tay', '030415141024', 'D');
+INSERT INTO REGISTERED_CUSTOMER (cus_id, rc_fb_name, rc_ic, rc_type) VALUES ('C0003', 'Lily Chen Lee', '981214105596', 'A');
+
+INSERT INTO MARKETING_STAFF (staff_id, staff_name, staff_ic, staff_email, staff_phone_num, staff_fb_name) VALUES ('S0001', 'Tay Ming Liang', '000525018991', 'mingliang@gmail.com', '01118646640', 'mingliang');
+INSERT INTO MARKETING_STAFF (staff_id, staff_name, staff_ic, staff_email, staff_phone_num, staff_fb_name) VALUES ('S0002', 'Tan Yi Wei', '001115101047', 'marcustan@gmail.com', '0111783174', 'Marcus Tan');
+INSERT INTO MARKETING_STAFF (staff_id, staff_name, staff_ic, staff_email, staff_phone_num, staff_fb_name) VALUES ('S0003', 'Tan Ching Erl', '000614018998', 'chingerl@gmail.com', '0173478986', 'Ching Erl');
+INSERT INTO MARKETING_STAFF (staff_id, staff_name, staff_ic, staff_email, staff_phone_num, staff_fb_name) VALUES ('S0004', 'Goh Pei Jin', '001007151032', 'peijin@gmail.com', '01111367374', 'Pei Jin Goh');
+INSERT INTO MARKETING_STAFF (staff_id, staff_name, staff_ic, staff_email, staff_phone_num, staff_fb_name) VALUES ('S0005', 'Ali bin Abu', '990131125633', 'ali1999@gmail.com', '0148523697', 'Ali');
+
+INSERT INTO NORMAL_PRODUCT (product_id, weight, product_price, product_name) VALUES ('NP001', 250, 11.50, 'Nasi Briyani Gam Ayam');
+INSERT INTO NORMAL_PRODUCT (product_id, weight, product_price, product_name) VALUES ('NP002', 250, 15.00, 'Nasi Briyani Gam Daging');
+INSERT INTO NORMAL_PRODUCT (product_id, weight, product_price, product_name) VALUES ('NP003', 250, 17.30, 'Nasi Briyani Gam Kambing');
+INSERT INTO NORMAL_PRODUCT (product_id, weight, product_price, product_name) VALUES ('NP004', 180, 10.00, 'Sambal Sotong Kering');
+INSERT INTO NORMAL_PRODUCT (product_id, weight, product_price, product_name) VALUES ('NP005', 240, 20.80, 'Rendang Dendeng(200G)');
+
+INSERT INTO PROMO_PACKAGE (pack_id, pack_name, pack_price) VALUES ('PP001', 'PACKAGE 1', 50.00);
+INSERT INTO PROMO_PACKAGE (pack_id, pack_name, pack_price) VALUES ('PP002', 'PACKAGE 2', 50.00);
+INSERT INTO PROMO_PACKAGE (pack_id, pack_name, pack_price) VALUES ('PP003', 'PACKAGE 3', 50.00);
+
+INSERT INTO PACK_DETAIL (pack_id, product_id, product_quantity) VALUES ('PP001', 'NP001', 1);
+INSERT INTO PACK_DETAIL (pack_id, product_id, product_quantity) VALUES ('PP001', 'NP002', 2);
+INSERT INTO PACK_DETAIL (pack_id, product_id, product_quantity) VALUES ('PP001', 'NP003', 1);
+INSERT INTO PACK_DETAIL (pack_id, product_id, product_quantity) VALUES ('PP001', 'NP004', 1);
+INSERT INTO PACK_DETAIL (pack_id, product_id, product_quantity) VALUES ('PP001', 'NP005', 1);
+
+INSERT INTO STOCK_INTAKE (purchase_order_id, buy_date) VALUES ('PO001', TO_DATE('01/01/2020','MM/DD/YYYY'));
+INSERT INTO STOCK_INTAKE (purchase_order_id, buy_date) VALUES ('PO002', TO_DATE('02/10/2020','MM/DD/YYYY'));
+INSERT INTO STOCK_INTAKE (purchase_order_id, buy_date) VALUES ('PO003', TO_DATE('02/21/2020','MM/DD/YYYY'));
+
+INSERT INTO INTAKE_DETAIL (purchase_order_id, product_id, intake_price, quantity_bought) VALUES ('PO001', 'NP001', 5.00, 500);
+INSERT INTO INTAKE_DETAIL (purchase_order_id, product_id, intake_price, quantity_bought) VALUES ('PO001', 'NP002', 7.00, 500);
+INSERT INTO INTAKE_DETAIL (purchase_order_id, product_id, intake_price, quantity_bought) VALUES ('PO002', 'NP001', 5.00, 500);
+INSERT INTO INTAKE_DETAIL (purchase_order_id, product_id, intake_price, quantity_bought) VALUES ('PO002', 'NP004', 4.00, 100);
+INSERT INTO INTAKE_DETAIL (purchase_order_id, product_id, intake_price, quantity_bought) VALUES ('PO003', 'NP005', 10.00, 100);
+
+INSERT INTO SALES (invoice_num, staff_id, phone_id, sales_date, payment_type) VALUES ('A0001', 'S0001', 'P0001', TO_DATE('01/02/2020', 'MM/DD/YYYY'), 'bank in');
+INSERT INTO SALES (invoice_num, staff_id, phone_id, sales_date, payment_type) VALUES ('A0002', 'S0002', 'P0004', TO_DATE('02/15/2020', 'MM/DD/YYYY'), 'bank in');
+INSERT INTO SALES (invoice_num, staff_id, phone_id, sales_date, payment_type) VALUES ('A0003', 'S0001', 'P0001', TO_DATE('02/14/2020', 'MM/DD/YYYY'), 'cheque');
+
+INSERT INTO SALES_DETAIL (invoice_num, item_id, item_type, sales_price, quantity_sold, commission_rate) VALUES ('A0001', 'NP001', 'normal', 11.50, 5, 0.32);
+INSERT INTO SALES_DETAIL (invoice_num, item_id, item_type, sales_price, quantity_sold, commission_rate) VALUES ('A0001', 'NP002', 'normal', 15.00, 5, 0.32);
+INSERT INTO SALES_DETAIL (invoice_num, item_id, item_type, sales_price, quantity_sold, commission_rate) VALUES ('A0001', 'PP001', 'promotion', 50.00, 1, 0.22);
+INSERT INTO SALES_DETAIL (invoice_num, item_id, item_type, sales_price, quantity_sold, commission_rate) VALUES ('A0002', 'NP001', 'normal', 11.50, 3, 0.32);
+INSERT INTO SALES_DETAIL (invoice_num, item_id, item_type, sales_price, quantity_sold, commission_rate) VALUES ('A0002', 'NP004', 'normal', 10.00, 2, 0.32);
+INSERT INTO SALES_DETAIL (invoice_num, item_id, item_type, sales_price, quantity_sold, commission_rate) VALUES ('A0003', 'PP001', 'promotion', 50.00, 4, 0.22);
+
+INSERT INTO DELIVERY (loca_id, loca_name, charge) VALUES ('L001', 'Cheras', 10.0);
+INSERT INTO DELIVERY (loca_id, loca_name, charge) VALUES ('L002', 'Shah Alam', 8.0);
+INSERT INTO DELIVERY (loca_id, loca_name, charge) VALUES ('L003', 'Gombak', 10.0);
+INSERT INTO DELIVERY (loca_id, loca_name, charge) VALUES ('L004', 'Keramat', 9.0);
+INSERT INTO DELIVERY (loca_id, loca_name, charge) VALUES ('L005', 'Setiawangsa', 9.0); 
+
+INSERT INTO POSTAGE (region_id, region_name, basic_fee, weight) VALUES ('R001', 'Sarawak', 3.8, 1.00);
+INSERT INTO POSTAGE (region_id, region_name, basic_fee, weight) VALUES ('R002', 'Sarawak', 4.7, 1.50);
+INSERT INTO POSTAGE (region_id, region_name, basic_fee, weight) VALUES ('R003', 'Sarawak', 5.6, 2.00);
+INSERT INTO POSTAGE (region_id, region_name, basic_fee, weight) VALUES ('R004', 'Sabah', 1.9, 1.00);
+INSERT INTO POSTAGE (region_id, region_name, basic_fee, weight) VALUES ('R005', 'Sabah', 3.8, 1.50);
+
+INSERT INTO SHIPMENT_DETAIL (invoice_num, shipment_id, shipment_type, shipment_price, ship_start_date, ship_end_date) VALUES ('A0001', 'L003', 'delivery', 10.0, TO_DATE('01/03/2020','MM/DD/YYYY'), TO_DATE('01/04/2020','MM/DD/YYYY'));
+INSERT INTO SHIPMENT_DETAIL (invoice_num, shipment_id, shipment_type, shipment_price, ship_start_date, ship_end_date) VALUES ('A0002', 'R002', 'postage', 10.0, TO_DATE('01/17/2020','MM/DD/YYYY'), TO_DATE('01/21/2020','MM/DD/YYYY'));
+INSERT INTO SHIPMENT_DETAIL (invoice_num, shipment_id, shipment_type, shipment_price, ship_start_date, ship_end_date) VALUES ('A0003', 'R005', 'postage', 10.0, TO_DATE('02/15/2020','MM/DD/YYYY'), NULL);
